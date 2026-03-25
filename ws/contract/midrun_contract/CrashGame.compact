@@ -1,0 +1,18 @@
+pragma language_version 0.22;
+import CompactStandardLibrary;
+
+export ledger latestGameId: Opaque<"string">;
+export ledger latestCrashAt: Opaque<"string">;
+export ledger latestDate: Opaque<"string">;
+export ledger gameCount: Counter;
+
+export circuit setGameData(
+  gameId: Opaque<"string">,
+  crashAt: Opaque<"string">,
+  date: Opaque<"string">
+): [] {
+  latestGameId = disclose(gameId);
+  latestCrashAt = disclose(crashAt);
+  latestDate = disclose(date);
+  increment(gameCount);
+}

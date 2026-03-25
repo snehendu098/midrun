@@ -1,0 +1,23 @@
+{
+  "name": "midrun-ws",
+  "scripts": {
+    "dev": "bun run --hot src/index.ts",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@midnight-ntwrk/wallet-sdk-facade": "*",
+    "@midnight-ntwrk/wallet-sdk-unshielded-wallet": "*",
+    "@midnight-ntwrk/wallet-sdk-shielded": "*",
+    "@midnight-ntwrk/wallet-sdk-dust-wallet": "*",
+    "@midnight-ntwrk/wallet-sdk-hd": "*",
+    "@midnight-ntwrk/wallet-sdk-address-format": "*",
+    "@midnight-ntwrk/ledger-v7": "*",
+    "@midnight-ntwrk/dapp-connector-api": "*",
+    "dotenv": "^17.2.2",
+    "hono": "^4.9.7"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "ngrok": "^5.0.0-beta.2"
+  }
+}
