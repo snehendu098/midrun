@@ -28,7 +28,9 @@
   "stakes": [],
   "totalPlayers": 0,
   "totalStakeAmount": 0,
-  "currentMultiplier": 1.00
+  "currentMultiplier": 1.00,
+  "queuedBets": [],
+  "queueSize": 0
 }
 ```
 

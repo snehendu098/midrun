@@ -2,7 +2,10 @@
   "name": "midrun-ws",
   "scripts": {
     "dev": "bun run --hot src/index.ts",
-    "test": "bun test"
+    "test": "bun test",
+    "generate-wallet": "bun run src/generate-wallet.ts",
+    "compile": "compact compile contract/midrun_contract/CrashGame.compact contract/compiled",
+    "deploy": "bun run src/deploy.ts"
   },
   "dependencies": {
     "@midnight-ntwrk/wallet-sdk-facade": "*",
@@ -13,8 +16,18 @@
     "@midnight-ntwrk/wallet-sdk-address-format": "*",
     "@midnight-ntwrk/ledger-v7": "*",
     "@midnight-ntwrk/dapp-connector-api": "*",
+    "@midnight-ntwrk/midnight-js-contracts": "*",
+    "@midnight-ntwrk/midnight-js-network-id": "*",
+    "@midnight-ntwrk/midnight-js-types": "*",
+    "@midnight-ntwrk/midnight-js-node-zk-config-provider": "*",
+    "@midnight-ntwrk/midnight-js-http-client-proof-provider": "*",
+    "@midnight-ntwrk/midnight-js-indexer-public-data-provider": "*",
+    "@midnight-ntwrk/midnight-js-level-private-state-provider": "*",
+    "@midnight-ntwrk/compact-runtime": "*",
+    "@midnight-ntwrk/compact-js": "*",
     "dotenv": "^17.2.2",
-    "hono": "^4.9.7"
+    "hono": "^4.9.7",
+    "rxjs": "^7.8.1"
   },
   "devDependencies": {
     "@types/bun": "latest",

@@ -4,15 +4,15 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // Midnight network configuration
-const MIDNIGHT_CONFIG = {
-  networkId: "preprod",
-  relayURL: process.env.MIDNIGHT_RPC_URL || "wss://rpc.preprod.midnight.network",
+export const MIDNIGHT_CONFIG = {
+  networkId: "undeployed",
+  relayURL: process.env.MIDNIGHT_RPC_URL || "ws://127.0.0.1:9944",
   indexerHttpUrl:
     process.env.MIDNIGHT_INDEXER_URL ||
-    "https://indexer.preprod.midnight.network/api/v3/graphql",
+    "http://127.0.0.1:8088/api/v3/graphql",
   indexerWsUrl:
     process.env.MIDNIGHT_INDEXER_WS_URL ||
-    "wss://indexer.preprod.midnight.network/api/v3/graphql/ws",
+    "ws://127.0.0.1:8088/api/v3/graphql/ws",
   provingServerUrl:
     process.env.MIDNIGHT_PROOF_SERVER_URL || "http://localhost:6300",
 };
@@ -24,7 +24,7 @@ let walletKeysInstance: any = null;
 /**
  * Initialize the Midnight wallet for the game creator
  */
-async function getWallet() {
+export async function getWallet() {
   if (walletInstance) return { wallet: walletInstance, keys: walletKeysInstance };
 
   try {
@@ -42,7 +42,7 @@ async function getWallet() {
     const { DustWallet } = await import(
       "@midnight-ntwrk/wallet-sdk-dust-wallet"
     );
-    const ledger = await import("@midnight-ntwrk/ledger-v7");
+    const ledger = await import("@midnight-ntwrk/ledger-v8");
 
     const seed = Buffer.from(process.env.MIDNIGHT_WALLET_SEED || "", "hex");
 
@@ -103,6 +103,63 @@ async function getWallet() {
 
     await walletInstance.start(shieldedKeys, dustKey);
 
+    // Wait for wallet to sync before dust registration
+    const Rx = await import("rxjs");
+    await Rx.firstValueFrom(
+      walletInstance.state().pipe(Rx.filter((s: any) => s.isSynced))
+    );
+
+    // Register NIGHT UTXOs for dust generation (required for tx fees)
+    try {
+      const syncedState: any = await Rx.firstValueFrom(
+        walletInstance.state().pipe(Rx.filter((s: any) => s.isSynced))
+      );
+
+      // Check if dust already available
+      if (syncedState.dust.availableCoins?.length > 0) {
+        console.log("Dust tokens already available");
+      } else {
+        // Get unregistered NIGHT UTXOs
+        const nightUtxos = (syncedState.unshielded.availableCoins || []).filter(
+          (coin: any) => coin.meta?.registeredForDustGeneration !== true,
+        );
+
+        if (nightUtxos.length > 0) {
+          console.log(`Registering ${nightUtxos.length} NIGHT UTXOs for dust generation...`);
+          const recipe = await walletInstance.registerNightUtxosForDustGeneration(
+            nightUtxos,
+            unshieldedKeystore.getPublicKey(),
+            (payload: Uint8Array) => unshieldedKeystore.signData(payload),
+          );
+          const finalized = await walletInstance.finalizeRecipe(recipe);
+          await walletInstance.submitTransaction(finalized);
+          console.log("Dust registration submitted — waiting for dust to generate...");
+        } else {
+          console.log("All UTXOs already registered, waiting for dust...");
+        }
+
+        // Wait for dust balance > 0 (up to 5 min on local network)
+        console.log("Waiting for dust balance (up to 5 min)...");
+        await Rx.firstValueFrom(
+          walletInstance.state().pipe(
+            Rx.throttleTime(5000),
+            Rx.tap((s: any) => {
+              if (s.isSynced) {
+                const bal = s.dust.walletBalance(new Date());
+                if (bal === 0n) process.stdout.write(".");
+              }
+            }),
+            Rx.filter((s: any) => s.isSynced),
+            Rx.filter((s: any) => s.dust.walletBalance(new Date()) > 0n),
+            Rx.timeout(300000),
+          )
+        );
+        console.log("\nDust is available!");
+      }
+    } catch (e: any) {
+      console.warn("Dust registration:", e.message || e);
+    }
+
     walletKeysInstance = {
       shieldedSecretKeys: shieldedKeys,
       dustSecretKey: dustKey,
@@ -131,7 +188,7 @@ export async function withdraw(
 
   try {
     const { wallet, keys } = await getWallet();
-    const ledger = await import("@midnight-ntwrk/ledger-v7");
+    const ledger = await import("@midnight-ntwrk/ledger-v8");
 
     // Convert to smallest unit (1 NIGHT = 1_000_000 units)
     const payoutAmount = BigInt(Math.floor(amount * 1_000_000));
@@ -179,30 +236,17 @@ export async function withdraw(
  */
 export async function saveToDB(crashAt: number): Promise<void> {
   const gameid = randomUUID();
-  const formattedCrashAt = parseFloat(crashAt.toFixed(2));
-  console.log(`Saving game to Midnight - Crashed at: ${formattedCrashAt}`);
+  const formattedCrashAt = crashAt.toFixed(2);
+  const date = Date.now().toString();
+  console.log(`Saving game to Midnight - ID: ${gameid}, crashAt: ${formattedCrashAt}`);
 
   try {
-    const { wallet, keys } = await getWallet();
-
-    // Build contract call transaction for setGameData circuit
-    // The compiled Compact contract generates TypeScript APIs that create
-    // the unproven transaction. We then balance and submit it.
-    const contractAddress = process.env.MIDNIGHT_CONTRACT_ADDRESS || "";
-
-    // Submit contract call via wallet's balanceUnsealedTransaction flow
-    // In production, this would use the compiled contract's TypeScript API:
-    //   const tx = contractApi.setGameData(gameid, formattedCrashAt.toString(), Date.now().toString());
-    //   const balanced = await wallet.balanceUnsealedTransaction(tx, keys, { ttl });
-    //   await wallet.submitTransaction(balanced);
-    console.log(
-      `Game ${gameid} saved on-chain - crashAt: ${formattedCrashAt}, contract: ${contractAddress}`
-    );
+    const { callSetGameData } = await import("./contract-api");
+    const txId = await callSetGameData(gameid, formattedCrashAt, date);
+    console.log(`Game ${gameid} saved on-chain - tx: ${txId}`);
   } catch (error) {
     console.error("Error saving to Midnight:", error);
   }
-
-  await new Promise((resolve) => setTimeout(resolve, 100));
 }
 
 /**

@@ -10,6 +10,9 @@ import { useGame } from "@/contexts/GameContext";
 import { useMidnightWallet } from "../providers/wallet-wrapper";
 import { toast } from "sonner";
 
+// Native token type (NIGHT) — 32 zero bytes hex-encoded
+const nativeTokenType = "0000000000000000000000000000000000000000000000000000000000000000";
+
 const PlaygroundInteractions = () => {
   const [betAmount, setBetAmount] = useState<number>(0);
   const [autoCashout, setAutoCashout] = useState<number>(0);
@@ -34,20 +37,34 @@ const PlaygroundInteractions = () => {
     }
 
     try {
-      toast.loading("Preparing transaction...");
-
       const receiverAddress = process.env.NEXT_PUBLIC_GAME_RECEIVER_ADDRESS || "";
-      const tx = await connectedApi.makeTransfer([{
+
+      // Check balances before attempting transfer
+      const unshieldedBal = await connectedApi.getUnshieldedBalances();
+      const dustBal = await connectedApi.getDustBalance();
+      console.log("[bet] unshielded balances:", unshieldedBal);
+      console.log("[bet] dust balance:", dustBal);
+      console.log("[bet] starting transfer:", { betAmount, receiverAddress, kind: "unshielded", type: nativeTokenType });
+
+      toast.loading("Waiting for wallet approval...");
+      const transferStart = Date.now();
+
+      const transferResult = await connectedApi.makeTransfer([{
         kind: "unshielded",
-        tokenType: "native",
+        type: nativeTokenType,
         value: BigInt(Math.floor(betAmount * 1_000_000)),
         recipient: receiverAddress,
       }]);
 
+      console.log("[bet] makeTransfer resolved in", Date.now() - transferStart, "ms:", transferResult);
+      const { tx } = transferResult;
+
       toast.dismiss();
       toast.loading("Submitting transaction...");
+      const submitStart = Date.now();
 
       await connectedApi.submitTransaction(tx);
+      console.log("[bet] submitTransaction resolved in", Date.now() - submitStart, "ms");
 
       toast.dismiss();
 
