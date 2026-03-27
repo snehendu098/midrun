@@ -1,0 +1,8 @@
+{
+  "version": 3,
+  "file": "index.js",
+  "sourceRoot": "../../../",
+  "sources": ["contract/midrun_contract/CrashGame.compact"],
+  "names": [],
+  "mappings": ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;EAAA;;;;;;;;;;MAQA,AAAA,WASC;;;;;cARC,QAAwB;cACxB,SAAyB;cACzB,MAAsB;;;;;;;;;;;yCAFtB,QAAwB,+BACxB,SAAyB,+BACzB,MAAsB;;;;;;;;;6CAFtB,QAAwB;6CACxB,SAAyB;6CACzB,MAAsB;;;OAMvB;;;;GACA;EAlBD;;;;;;;;;;;;;;;;;;;;;;;;;;;;;IAGA;;;;;;;;;yEAA6C;IAC7C;;;;;;;;;yEAA8C;IAC9C;;;;;;;;;yEAA2C;IAC3C;;;;;;;;;yEAAiC;;;;;;;GAYhC;EAVD,AAAA,cASC,4BARC,QAAwB,EACxB,SAAyB,EACzB,MAAsB;IAEtB;;;;;;;2HAAwB,QAAM;;yEAAlB;IACZ;;;;;;;2HAAyB,SAAO;;yEAAnB;IACb;;;;;;;2HAAsB,MAAI;;yEAAhB;UACV,KAAS;IAAT;;;;;;;;;;6FAAA,KAAS;;;;wEAAA;;GACV;;;;;;;;;;;;;;;;IAdD;qCAAA;;;;;;;;;;;0GAA6C;KAAA;IAC7C;qCAAA;;;;;;;;;;;0GAA8C;KAAA;IAC9C;qCAAA;;;;;;;;;;;0GAA2C;KAAA;IAC3C;qCAAA;;;;;;;;;;;0GAAiC;KAAA;;;;;;;;;;"
+}

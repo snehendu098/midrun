@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__claude_ai_Cloudflare_Developer_Platform__search_cloudflare_documentation",
+      "Bash(bun run:*)",
+      "Bash(npm search:*)",
+      "WebFetch(domain:docs.midnight.network)",
+      "Bash(bun -e:*)"
+    ]
+  }
+}
